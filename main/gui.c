@@ -10,10 +10,6 @@ static tsgl_gui* scene_settings;
 
 // --------------------------------------------- main scene
 
-static tsgl_gui* plate_up;
-static tsgl_gui* button_powerOff;
-static tsgl_gui* button_settings;
-
 static void* callback_powerOff(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
     if (arg0 == 0) {
         system_powerOff();
@@ -32,28 +28,28 @@ static void gui_scene_main() {
     scene_main = tsgl_gui_addObject(gui);
     scene_main->color = tsgl_color_raw(tsgl_color_fromHex(0x018db4), gui->colormode);
 
-    plate_up = tsgl_gui_addObject(scene_main);
+    tsgl_gui* plate_up = tsgl_gui_addObject(scene_main);
     plate_up->x = 0;
     plate_up->y = 0;
     plate_up->width = framebuffer.width;
     plate_up->height = 50;
     plate_up->color = tsgl_color_raw(tsgl_color_fromHex(0x757575), plate_up->colormode);
 
-    button_powerOff = tsgl_gui_addButton(plate_up);
-    button_powerOff->width = 150;
-    button_powerOff->height = 30;
-    button_powerOff->user_callback = callback_powerOff;
-    tsgl_gui_setOffsetFromBorder(button_powerOff, tsgl_gui_offsetFromBorder_center_left, 10, 0);
-    tsgl_gui_button_setStyle(button_powerOff, TSGL_RED, tsgl_color_fromHex(0x9c6800), tsgl_gui_button_fill);
-    tsgl_gui_button_setText(button_powerOff, TSGL_WHITE, 8, "power off", false);
+    tsgl_gui* powerOff = tsgl_gui_addButton(plate_up);
+    powerOff->width = 150;
+    powerOff->height = 40;
+    powerOff->user_callback = callback_powerOff;
+    tsgl_gui_setOffsetFromBorder(powerOff, tsgl_gui_offsetFromBorder_center_left, 5, 0);
+    tsgl_gui_button_setStyle(powerOff, TSGL_RED, tsgl_color_fromHex(0x9c6800), tsgl_gui_button_fill);
+    tsgl_gui_button_setText(powerOff, TSGL_WHITE, 8, "power off", false);
 
-    button_settings = tsgl_gui_addButton(plate_up);
-    button_settings->width = 150;
-    button_settings->height = 30;
-    button_settings->user_callback = callback_settings;
-    tsgl_gui_setOffsetFromBorder(button_settings, tsgl_gui_offsetFromBorder_center_right, 10, 0);
-    tsgl_gui_button_setStyle(button_settings, tsgl_color_fromHex(0xcacaca), tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
-    tsgl_gui_button_setText(button_settings, TSGL_WHITE, 8, "settings", false);
+    tsgl_gui* settings = tsgl_gui_addButton(plate_up);
+    settings->width = 150;
+    settings->height = 40;
+    settings->user_callback = callback_settings;
+    tsgl_gui_setOffsetFromBorder(settings, tsgl_gui_offsetFromBorder_center_right, 5, 0);
+    tsgl_gui_button_setStyle(settings, tsgl_color_fromHex(0xcacaca), tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
+    tsgl_gui_button_setText(settings, TSGL_WHITE, 8, "settings", false);
 }
 
 // --------------------------------------------- main scene
