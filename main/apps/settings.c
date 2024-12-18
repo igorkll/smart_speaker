@@ -8,8 +8,6 @@
 #include <TSGL_gui/colorpicker.h>
 #include <TSGL_gui/text.h>
 
-#define SETTINGS_PATH "/storage/settings.cfg"
-
 static tsgl_gui* scene;
 
 app_settings_struct defaultSettings = {
@@ -26,19 +24,79 @@ app_settings_struct defaultSettings = {
     .sound_volume_disconnect = 1
 };
 
+const char* settingsPath = "/storage/settings.cfg";
 static uint8_t currentVersion = 0;
 app_settings_struct currentSettings;
 
+#define TAB_COUNT 3
+static uint8_t currentTab = 0;
+static uint8_t oldTab = 0;
+static tsgl_gui* tabButtons[TAB_COUNT];
+static tsgl_gui* tabs[TAB_COUNT];
+static uint32_t tabButtonColorEnable = 0xd9d9d9;
+static uint32_t tabButtonColorDisable = 0x434343;
+
+static void updateTab(uint8_t i) {
+    bool enabled = currentTab == i;
+
+    tsgl_gui* button = tabButtons[i];
+    tsgl_gui* tab = tabs[i];
+
+    button->color = tsgl_color_raw(enabled ? tsgl_color_fromHex(tabButtonColorEnable) : tsgl_color_fromHex(tabButtonColorDisable), gui->colormode);
+    button->needDraw = true;
+
+    tab->interactive = enabled;
+    tab->displayable = enabled;
+    tab->needDraw = enabled;
+}
+
+static void updateTabs() {
+    updateTab(currentTab);
+    updateTab(oldTab);
+    oldTab = currentTab;
+}
+
+static void* callback_onTabChange(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
+    if (arg0 == 1) {
+        currentTab = *((uint8_t*)userArg);
+        updateTabs();
+    }
+    return NULL;
+}
+
+static tsgl_pos lastTabY = 5;
+static size_t lastIndex = 0;
+static void addTab(tsgl_gui* tab_host, tsgl_gui* tab, const char* title) {
+    tsgl_gui* tab_button = tsgl_gui_addButton(tab_host);
+    tab_button->x = 5;
+    tab_button->y = lastTabY;
+    tab_button->width = tab_host->width - 10;
+    tab_button->height = 40;
+    tab_button->animationStopEnable = true;
+    tab_button->animationStop = 0;
+    tab_button->user_callback = callback_onTabChange;
+    uint8_t* tabIndex = malloc(sizeof(uint8_t));
+    *tabIndex = lastIndex;
+    tab_button->userArg = tabIndex;
+    tsgl_gui_button_setStyle(tab_button, tsgl_color_fromHex(tabButtonColorDisable), tsgl_color_fromHex(tabButtonColorDisable), tsgl_gui_button_fill);
+    tsgl_gui_button_setText(tab_button, TSGL_WHITE, 8, title, false);
+
+    tabButtons[lastIndex] = tab_button;
+    tabs[lastIndex] = tab;
+
+    lastTabY += 45;
+    lastIndex++;
+}
+
 static void* callback_openDesktop(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
     if (arg0 == 0) {
-        system_playSoundFromList(system_sound_disconnect, false);
         app_desktop_open();
     }
     return NULL;
 }
 
 void app_settings_init() {
-    FILE* file = tsgl_filesystem_open(SETTINGS_PATH, "rb");
+    FILE* file = tsgl_filesystem_open(settingsPath, "rb");
     if (file) {
         uint8_t realVersion;
         fread(&realVersion, 1, 1, file);
@@ -83,15 +141,58 @@ void app_settings_init() {
         .globalCentering = true,
         .targetWidth = 16
     });
+
+    // --------------------------------------- tab host
+
+    tsgl_pos tab_host_size = 150;
+
+    tsgl_gui* tab_host = tsgl_gui_addObject(scene);
+    tsgl_gui_setAllFormat(tab_host, tsgl_gui_absolute);
+    tab_host->color = tsgl_color_raw(tsgl_color_fromHex(0x2c2c2c), gui->colormode);
+    tab_host->x = 0;
+    tab_host->y = 50;
+    tab_host->width = tab_host_size;
+    tab_host->height = scene->height - 50;
+
+    // --------------------------------------- sound tab
+
+    tsgl_gui* tab = tsgl_gui_addButton(scene);
+    tab->width = 50;
+    tab->height = 50;
+    tab->color = tsgl_color_raw(tsgl_color_fromHex(0xff0000), gui->colormode);
+    tsgl_gui_setOffsetFromBorder(tab, tsgl_gui_offsetFromBorder_center, 0, 0);
+    addTab(tab_host, tab, "sound");
+
+    tab = tsgl_gui_addButton(scene);
+    tab->width = 50;
+    tab->height = 50;
+    tab->color = tsgl_color_raw(tsgl_color_fromHex(0x00ff00), gui->colormode);
+    tsgl_gui_setOffsetFromBorder(tab, tsgl_gui_offsetFromBorder_center, 0, 0);
+    addTab(tab_host, tab, "gui");
+
+    tab = tsgl_gui_addButton(scene);
+    tab->width = 50;
+    tab->height = 50;
+    tab->color = tsgl_color_raw(tsgl_color_fromHex(0x0000ff), gui->colormode);
+    tsgl_gui_setOffsetFromBorder(tab, tsgl_gui_offsetFromBorder_center, 0, 0);
+    addTab(tab_host, tab, "connect");
+
+    tab = tsgl_gui_addButton(scene);
+    tab->width = 50;
+    tab->height = 50;
+    tab->color = tsgl_color_raw(tsgl_color_fromHex(0xffff00), gui->colormode);
+    tsgl_gui_setOffsetFromBorder(tab, tsgl_gui_offsetFromBorder_center, 0, 0);
+    addTab(tab_host, tab, "power");
+
+    updateTabs();
 }
 
 void app_settings_open() {
-    system_playSoundFromList(system_sound_connect, false);
     tsgl_gui_select(scene);
 }
 
 void app_settings_save() {
-    FILE* file = tsgl_filesystem_open(SETTINGS_PATH, "wb");
+    FILE* file = tsgl_filesystem_open(settingsPath, "wb");
     if (file) {
         fwrite(&currentVersion, 1, 1, file);
         fwrite(&currentSettings, 1, sizeof(app_settings_struct), file);

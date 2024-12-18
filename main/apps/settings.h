@@ -15,6 +15,7 @@ typedef struct {
     float sound_volume_disconnect;
 } app_settings_struct;
 
+extern app_settings_struct defaultSettings;
 extern app_settings_struct currentSettings;
 
 void app_settings_init();

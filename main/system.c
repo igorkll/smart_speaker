@@ -96,6 +96,7 @@ static void _loop(void* parameter) {
         }
         oldTouchCount = touchCount;
         tsgl_gui_processGui(gui, NULL, &benchmark, 0);
+        vTaskDelay(1);
     }
 }
 
@@ -141,16 +142,16 @@ void system_init() {
     tsgl_keyboard_setDebounce(&keyboard, 'A', 20, 50);
     tsgl_keyboard_setDebounce(&keyboard, 'B', 20, 50);
 
+    gui = tsgl_gui_createRoot_buffer(&display, &framebuffer);
+    apps_init();
+    app_desktop_open();
+    xTaskCreate(_loop, NULL, 4096, NULL, 24, NULL);
+
     left_speaker = tsgl_sound_newDacOutput(LEFT_SPEAKER_DAC);
     right_speaker = tsgl_sound_newDacOutput(RIGHT_SPEAKER_DAC);
     speakers[0] = left_speaker;
     speakers[1] = right_speaker;
     system_playSoundFromList(system_sound_load, false);
-
-    gui = tsgl_gui_createRoot_buffer(&display, &framebuffer);
-    apps_init();
-    app_desktop_open();
-    xTaskCreate(_loop, NULL, 4096, NULL, 24, NULL);
 }
 
 void system_powerOff() {
