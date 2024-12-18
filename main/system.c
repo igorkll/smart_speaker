@@ -42,6 +42,11 @@ static tsgl_display_settings settings = {
 #define FIRST 34
 #define LAST  35
 
+#define LEFT_SPEAKER  25
+#define RIGHT_SPEAKER 26
+#define LEFT_SPEAKER_DAC  0
+#define RIGHT_SPEAKER_DAC 1
+
 // --------------------------------
 
 tsgl_display display;
@@ -53,6 +58,9 @@ tsgl_touchscreen touchscreen = {
     .height = HEIGHT
 };
 tsgl_keyboard keyboard;
+tsgl_sound_output* left_speaker;
+tsgl_sound_output* right_speaker;
+tsgl_sound_output* speakers[2];
 
 static tsgl_ledc led_red;
 static tsgl_ledc led_blue;
@@ -112,6 +120,11 @@ void system_init() {
     tsgl_keyboard_bindButton(&keyboard, 'B', false, false, LAST);
     tsgl_keyboard_setDebounce(&keyboard, 'A', 20, 50);
     tsgl_keyboard_setDebounce(&keyboard, 'B', 20, 50);
+
+    left_speaker = tsgl_sound_newDacOutput(LEFT_SPEAKER_DAC);
+    right_speaker = tsgl_sound_newDacOutput(RIGHT_SPEAKER_DAC);
+    speakers[0] = left_speaker;
+    speakers[1] = right_speaker;
 }
 
 void system_powerOff() {
@@ -129,4 +142,48 @@ void system_setRed(uint8_t value) {
 
 void system_setBlue(uint8_t value) {
     tsgl_ledc_set(&led_blue, value);
+}
+
+
+#define MAX_SOUND_PLAYS 2
+
+typedef struct {
+    tsgl_sound sound;
+    char* path;
+} PlaySound;
+
+static PlaySound playSounds[MAX_SOUND_PLAYS];
+static uint8_t currentPlaySound = 0;
+
+void system_playSound(const char* path) {
+    PlaySound playSound = playSounds[currentPlaySound];
+    playSound.path = NULL;
+
+    if (playSound.path) {
+        if (strcmp(path, playSound.path) != 0) {
+            tsgl_sound_free(&playSound.sound);
+            free(playSound.path);
+            playSound.path = NULL;
+        }
+    }
+
+    if (!playSound.path) {
+        tsgl_sound_load_pcm(&playSound.sound, TSGL_SOUND_FULLBUFFER, TSGL_SPIRAM, path, 8000, 1, 1, tsgl_sound_pcm_unsigned);
+        playSound.path = malloc(strlen(path) + 1);
+        strcpy(playSound.path, path);
+    }
+    
+    if (playSound.sound.playing) {
+        tsgl_sound_stop(&playSound.sound);
+        tsgl_sound_setPosition(&playSound.sound, 0);
+    }
+
+    tsgl_sound_setOutputs(&playSound.sound, speakers, 2, false);
+    tsgl_sound_setVolume(&playSound.sound, 1);
+    tsgl_sound_play(&playSound.sound);
+
+    currentPlaySound++;
+    if (currentPlaySound >= MAX_SOUND_PLAYS) {
+        currentPlaySound = 0;
+    }
 }

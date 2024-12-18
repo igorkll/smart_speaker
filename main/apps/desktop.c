@@ -9,7 +9,7 @@
 #include <TSGL_gui/colorpicker.h>
 #include <TSGL_gui/text.h>
 
-tsgl_gui* app_desktop_scene;
+static tsgl_gui* scene;
 
 static void* callback_powerOff(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
     if (arg0 == 0) {
@@ -20,16 +20,16 @@ static void* callback_powerOff(tsgl_gui* self, int arg0, void* arg1, void* userA
 
 static void* callback_settings(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
     if (arg0 == 0) {
-        tsgl_gui_select(app_settings_scene);
+        app_settings_open();
     }
     return NULL;
 }
 
 void app_desktop_init() {
-    app_desktop_scene = tsgl_gui_addObject(gui);
-    app_desktop_scene->color = tsgl_color_raw(tsgl_color_fromHex(0x018db4), gui->colormode);
+    scene = tsgl_gui_addObject(gui);
+    scene->color = tsgl_color_raw(tsgl_color_fromHex(0x018db4), gui->colormode);
 
-    tsgl_gui* plate_up = tsgl_gui_addObject(app_desktop_scene);
+    tsgl_gui* plate_up = tsgl_gui_addObject(scene);
     plate_up->x = 0;
     plate_up->y = 0;
     plate_up->width = framebuffer.width;
@@ -65,4 +65,8 @@ void app_desktop_init() {
         .globalCentering = true,
         .targetWidth = 16
     });
+}
+
+void app_desktop_open() {
+    tsgl_gui_select(scene);
 }

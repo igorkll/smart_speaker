@@ -15,6 +15,6 @@ static void gui_loop(void* parameter) {
 void gui_init() {
     gui = tsgl_gui_createRoot_buffer(&display, &framebuffer);
     apps_init();
-    tsgl_gui_select(app_desktop_scene);
+    app_desktop_open();
     xTaskCreate(gui_loop, NULL, 4096, NULL, 24, NULL);
 }

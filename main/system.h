@@ -5,6 +5,7 @@
 #include <esp_random.h>
 #include <esp_timer.h>
 #include <math.h>
+#include <string.h>
 
 #include <TSGL.h>
 #include <TSGL_benchmark.h>
@@ -29,8 +30,12 @@ extern tsgl_framebuffer framebuffer2;
 extern tsgl_benchmark benchmark;
 extern tsgl_touchscreen touchscreen;
 extern tsgl_keyboard keyboard;
+extern tsgl_sound_output* left_speaker;
+extern tsgl_sound_output* right_speaker;
+extern tsgl_sound_output* speakers[];
 
 void system_init();
 void system_powerOff();
 void system_setRed(uint8_t value);
 void system_setBlue(uint8_t value);
+void system_playSound(const char* path);

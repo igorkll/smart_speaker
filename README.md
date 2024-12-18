@@ -21,8 +21,8 @@ TSGL: https://github.com/igorkll/TSGL
 * CS 2
 
 ### speakers
-* LEFT  25
-* RIGHT 26
+* LEFT  25 (dac 0)
+* RIGHT 26 (dac 1)
 
 ### leds
 * RED  18
