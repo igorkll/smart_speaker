@@ -35,7 +35,7 @@ static tsgl_gui* tabButtons[TAB_COUNT];
 static tsgl_gui* tabs[TAB_COUNT];
 static uint32_t tabButtonColorEnable = 0xcccccc;
 static uint32_t tabButtonColorDisable = 0x666666;
-static const tsgl_pos tab_host_size = 150;
+static const tsgl_pos tab_host_size = 90;
 
 static void updateTab(uint8_t i) {
     bool enabled = currentTab == i;
@@ -94,6 +94,8 @@ static void addTab(tsgl_gui* tab_host, tsgl_gui* tab, const char* title) {
 
 tsgl_gui* newTab() {
     tsgl_gui* tab = tsgl_gui_addObject(scene);
+    tab->x = tab_host_size;
+    tab->y = 50;
     tab->width = gui->width - tab_host_size;
     tab->height = gui->height - 50;
     return tab;
