@@ -124,6 +124,8 @@ void app_settings_init() {
         memcpy(&currentSettings, &defaultSettings, sizeof(app_settings_struct));
     }
 
+    // --------------------------------------- create scene
+
     scene = tsgl_gui_addObject(gui);
     scene->color = tsgl_color_raw(tsgl_color_fromHex(0xa0a0a0), gui->colormode);
 
