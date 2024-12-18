@@ -98,6 +98,7 @@ tsgl_gui* newTab() {
     tab->y = 50;
     tab->width = gui->width - tab_host_size;
     tab->height = gui->height - 50;
+    tab->color = tsgl_color_raw(tsgl_color_fromHex(0xa0a0a0), gui->colormode);;
     return tab;
 }
 
@@ -168,20 +169,24 @@ void app_settings_init() {
     // --------------------------------------- sound tab
 
     tsgl_gui* tab = newTab();
-    tab->color = tsgl_color_raw(tsgl_color_fromHex(0xff0000), gui->colormode);
     addTab(tab_host, tab, "sound");
 
+    // --------------------------------------- gui tab
+
     tab = newTab();
-    tab->color = tsgl_color_raw(tsgl_color_fromHex(0x00ff00), gui->colormode);
     addTab(tab_host, tab, "gui");
 
-    tab = newTab();
-    tab->color = tsgl_color_raw(tsgl_color_fromHex(0x0000ff), gui->colormode);
-    addTab(tab_host, tab, "connect");
+    // --------------------------------------- connect tab
 
     tab = newTab();
-    tab->color = tsgl_color_raw(tsgl_color_fromHex(0xffff00), gui->colormode);
+    addTab(tab_host, tab, "connect");
+
+    // --------------------------------------- power tab
+
+    tab = newTab();
     addTab(tab_host, tab, "power");
+
+    // ---------------------------------------
 
     updateTabs();
 }
