@@ -12,7 +12,7 @@ static tsgl_gui* scene;
 
 static void* callback_openDesktop(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
     if (arg0 == 0) {
-        system_playSound("/storage/discnct.wav");
+        system_playSound("/storage/discnct.wav", false, 0.4);
         app_desktop_open();
     }
     return NULL;
@@ -53,6 +53,6 @@ void app_settings_init() {
 }
 
 void app_settings_open() {
-    system_playSound("/storage/cnct.wav");
+    system_playSound("/storage/cnct.wav", false, 0.4);
     tsgl_gui_select(scene);
 }

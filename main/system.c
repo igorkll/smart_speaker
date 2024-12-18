@@ -92,7 +92,7 @@ static void _loop(void* parameter) {
         tsgl_gui_processTouchscreen(gui, &touchscreen);
         uint8_t touchCount = tsgl_touchscreen_touchCount(&touchscreen);
         if (touchCount > 0 && oldTouchCount == 0) {
-            system_playSound("/storage/click.wav");
+            system_playSound("/storage/click.wav", false, 0.1);
         }
         oldTouchCount = touchCount;
         tsgl_gui_processGui(gui, NULL, &benchmark, 0);
@@ -145,7 +145,7 @@ void system_init() {
     right_speaker = tsgl_sound_newDacOutput(RIGHT_SPEAKER_DAC);
     speakers[0] = left_speaker;
     speakers[1] = right_speaker;
-    system_playSound("/storage/load.wav");
+    system_playSound("/storage/load.wav", false, 0.5);
 
     gui = tsgl_gui_createRoot_buffer(&display, &framebuffer);
     apps_init();
@@ -156,7 +156,7 @@ void system_init() {
 void system_powerOff() {
     system_bigText(&framebuffer, "goodbye!");
     tsgl_display_send(&display, &framebuffer);
-    system_waitPlaySound("/storage/shutdown.wav", true);
+    system_playSound("/storage/shutdown.wav", true, 0.5);
 
     tsgl_display_setBacklight(&display, 0);
     gpio_config_t io_conf = {};
@@ -185,7 +185,7 @@ typedef struct {
 static PlaySound playSounds[MAX_SOUND_PLAYS];
 static uint8_t currentPlaySound = 0;
 
-void system_waitPlaySound(const char* path, bool wait) {
+void system_playSound(const char* path, bool wait, float volume) {
     PlaySound* playSound = NULL;
     for (size_t i = 0; i < MAX_SOUND_PLAYS; i++) {
         PlaySound* lPlaySound = &playSounds[i];
@@ -222,12 +222,8 @@ void system_waitPlaySound(const char* path, bool wait) {
     }
 
     tsgl_sound_setOutputs(&playSound->sound, speakers, 2, false);
-    tsgl_sound_setVolume(&playSound->sound, 1);
+    tsgl_sound_setVolume(&playSound->sound, volume);
     tsgl_sound_play(&playSound->sound);
 
     while (wait && playSound->sound.playing) vTaskDelay(1);
-}
-
-void system_playSound(const char* path) {
-    system_waitPlaySound(path, false);
 }
