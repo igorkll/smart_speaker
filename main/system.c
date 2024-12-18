@@ -92,7 +92,7 @@ static void _loop(void* parameter) {
         tsgl_gui_processTouchscreen(gui, &touchscreen);
         uint8_t touchCount = tsgl_touchscreen_touchCount(&touchscreen);
         if (touchCount > 0 && oldTouchCount == 0) {
-            system_playSound("/storage/click.wav", false, 0.1);
+            system_playSoundFromList(system_sound_click, false);
         }
         oldTouchCount = touchCount;
         tsgl_gui_processGui(gui, NULL, &benchmark, 0);
@@ -145,7 +145,7 @@ void system_init() {
     right_speaker = tsgl_sound_newDacOutput(RIGHT_SPEAKER_DAC);
     speakers[0] = left_speaker;
     speakers[1] = right_speaker;
-    system_playSound("/storage/load.wav", false, 0.5);
+    system_playSoundFromList(system_sound_load, false);
 
     gui = tsgl_gui_createRoot_buffer(&display, &framebuffer);
     apps_init();
@@ -156,7 +156,7 @@ void system_init() {
 void system_powerOff() {
     system_bigText(&framebuffer, "goodbye!");
     tsgl_display_send(&display, &framebuffer);
-    system_playSound("/storage/shutdown.wav", true, 0.5);
+    system_playSoundFromList(system_sound_shutdown, true);
 
     tsgl_display_setBacklight(&display, 0);
     gpio_config_t io_conf = {};
@@ -226,4 +226,45 @@ void system_playSound(const char* path, bool wait, float volume) {
     tsgl_sound_play(&playSound->sound);
 
     while (wait && playSound->sound.playing) vTaskDelay(1);
+}
+
+void system_playSoundFromList(system_sound sound, bool wait) {
+    bool enable = false;
+    switch (sound) {
+        case system_sound_click:
+            if (currentSettings.sound_enable_click) {
+                system_playSound("/storage/click.wav", wait, currentSettings.sound_volume_click);
+                enable = true;
+            }
+            break;
+
+        case system_sound_connect:
+            if (currentSettings.sound_enable_connect) {
+                system_playSound("/storage/cnct.wav", wait, currentSettings.sound_volume_connect);
+                enable = true;
+            }
+            break;
+
+        case system_sound_disconnect:
+            if (currentSettings.sound_enable_disconnect) {
+                system_playSound("/storage/discnct.wav", wait, currentSettings.sound_volume_disconnect);
+                enable = true;
+            }
+            break;
+
+        case system_sound_load:
+            if (currentSettings.sound_enable_load) {
+                system_playSound("/storage/load.wav", wait, currentSettings.sound_volume_load);
+                enable = true;
+            }
+            break;
+
+        case system_sound_shutdown:
+            if (currentSettings.sound_enable_shutdown) {
+                system_playSound("/storage/shutdown.wav", wait, currentSettings.sound_volume_shutdown);
+                enable = true;
+            }
+            break;
+    }
+    if (!enable && wait) tsgl_delay(1000);
 }

@@ -25,6 +25,14 @@
 
 #include <TSGL_fonts/default.h>
 
+typedef enum {
+    system_sound_click,
+    system_sound_load,
+    system_sound_shutdown,
+    system_sound_connect,
+    system_sound_disconnect,
+} system_sound;
+
 extern tsgl_gui* gui;
 
 extern tsgl_display display;
@@ -42,3 +50,4 @@ void system_powerOff();
 void system_setRed(uint8_t value);
 void system_setBlue(uint8_t value);
 void system_playSound(const char* path, bool wait, float volume);
+void system_playSoundFromList(system_sound sound, bool wait);
