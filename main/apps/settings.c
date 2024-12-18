@@ -18,7 +18,7 @@ static void* callback_openDesktop(tsgl_gui* self, int arg0, void* arg1, void* us
     return NULL;
 }
 
-void app_desktop_init() {
+void app_settings_init() {
     app_settings_scene = tsgl_gui_addObject(gui);
     app_settings_scene->color = tsgl_color_raw(tsgl_color_fromHex(0xa0a0a0), gui->colormode);
 

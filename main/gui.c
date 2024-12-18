@@ -2,7 +2,7 @@
 #include "apps.h"
 #include <TSGL_gui.h>
 
-static tsgl_gui* gui;
+tsgl_gui* gui;
 
 static void gui_loop(void* parameter) {
     while (true) {
