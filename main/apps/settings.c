@@ -169,11 +169,27 @@ void app_settings_init() {
     // --------------------------------------- sound tab
 
     tsgl_gui* tab = newTab();
+
+    tsgl_gui* testButton = tsgl_gui_addButton(tab);
+    testButton->width = 80;
+    testButton->height = 40;
+    tsgl_gui_setOffsetFromBorder(testButton, tsgl_gui_offsetFromBorder_up_left, 5, 5);
+    tsgl_gui_button_setStyle(testButton, tsgl_color_fromHex(0xcacaca), tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
+    tsgl_gui_button_setText(testButton, TSGL_WHITE, 8, "sound", false);
+
     addTab(tab_host, tab, "sound");
 
     // --------------------------------------- gui tab
 
     tab = newTab();
+
+    testButton = tsgl_gui_addButton(tab);
+    testButton->width = 80;
+    testButton->height = 40;
+    tsgl_gui_setOffsetFromBorder(testButton, tsgl_gui_offsetFromBorder_up_left, 5, 5);
+    tsgl_gui_button_setStyle(testButton, tsgl_color_fromHex(0xcacaca), tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
+    tsgl_gui_button_setText(testButton, TSGL_WHITE, 8, "kek", false);
+
     addTab(tab_host, tab, "gui");
 
     // --------------------------------------- connect tab
@@ -184,6 +200,14 @@ void app_settings_init() {
     // --------------------------------------- power tab
 
     tab = newTab();
+
+    testButton = tsgl_gui_addButton(tab);
+    testButton->width = 160;
+    testButton->height = 80;
+    tsgl_gui_setOffsetFromBorder(testButton, tsgl_gui_offsetFromBorder_up_left, 5, 5);
+    tsgl_gui_button_setStyle(testButton, tsgl_color_fromHex(0xcacaca), tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
+    tsgl_gui_button_setText(testButton, TSGL_WHITE, 8, "test", false);
+
     addTab(tab_host, tab, "power");
 
     // ---------------------------------------
