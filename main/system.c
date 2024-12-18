@@ -156,31 +156,31 @@ static PlaySound playSounds[MAX_SOUND_PLAYS];
 static uint8_t currentPlaySound = 0;
 
 void system_playSound(const char* path) {
-    PlaySound playSound = playSounds[currentPlaySound];
-    playSound.path = NULL;
+    PlaySound* playSound = &playSounds[currentPlaySound];
+    playSound->path = NULL;
 
-    if (playSound.path) {
-        if (strcmp(path, playSound.path) != 0) {
-            tsgl_sound_free(&playSound.sound);
-            free(playSound.path);
-            playSound.path = NULL;
+    if (playSound->path) {
+        if (strcmp(path, playSound->path) != 0) {
+            tsgl_sound_free(&playSound->sound);
+            free(playSound->path);
+            playSound->path = NULL;
         }
     }
 
-    if (!playSound.path) {
-        tsgl_sound_load_pcm(&playSound.sound, TSGL_SOUND_FULLBUFFER, TSGL_SPIRAM, path, 8000, 1, 1, tsgl_sound_pcm_unsigned);
-        playSound.path = malloc(strlen(path) + 1);
-        strcpy(playSound.path, path);
+    if (!playSound->path) {
+        tsgl_sound_load_pcm(&playSound->sound, TSGL_SOUND_FULLBUFFER, TSGL_SPIRAM, path, 8000, 1, 1, tsgl_sound_pcm_unsigned);
+        playSound->path = malloc(strlen(path) + 1);
+        strcpy(playSound->path, path);
     }
     
-    if (playSound.sound.playing) {
-        tsgl_sound_stop(&playSound.sound);
-        tsgl_sound_setPosition(&playSound.sound, 0);
+    if (playSound->sound.playing) {
+        tsgl_sound_stop(&playSound->sound);
+        tsgl_sound_setPosition(&playSound->sound, 0);
     }
 
-    tsgl_sound_setOutputs(&playSound.sound, speakers, 2, false);
-    tsgl_sound_setVolume(&playSound.sound, 1);
-    tsgl_sound_play(&playSound.sound);
+    tsgl_sound_setOutputs(&playSound->sound, speakers, 2, false);
+    tsgl_sound_setVolume(&playSound->sound, 1);
+    tsgl_sound_play(&playSound->sound);
 
     currentPlaySound++;
     if (currentPlaySound >= MAX_SOUND_PLAYS) {
