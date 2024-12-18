@@ -65,9 +65,7 @@ tsgl_sound_output* speakers[2];
 static tsgl_ledc led_red;
 static tsgl_ledc led_blue;
 
-void system_init() {
-    ESP_ERROR_CHECK(tsgl_framebuffer_init(&framebuffer, settings.driver->colormode, settings.width, settings.height, BUFFER));
-
+void system_bigText(tsgl_framebuffer* framebuffer, const char* text) {
     tsgl_print_settings print = {
         .font = tsgl_font_defaultFont,
         .fill = TSGL_INVALID_RAWCOLOR,
@@ -77,12 +75,18 @@ void system_init() {
         .globalCentering = true,
         .locationMode = tsgl_print_start_top
     };
+    print.width = framebuffer->width;
+    print.height = framebuffer->height;
+    print.targetHeight = framebuffer->width / 6;
+    tsgl_framebuffer_clear(framebuffer, tsgl_color_raw(tsgl_color_fromHex(0x091078), settings.driver->colormode));
+    tsgl_framebuffer_text(framebuffer, 0, 0, print, text);
+}
+
+void system_init() {
+    ESP_ERROR_CHECK(tsgl_framebuffer_init(&framebuffer, settings.driver->colormode, settings.width, settings.height, BUFFER));
+
     tsgl_framebuffer_rotate(&framebuffer, ROTATION);
-    print.width = framebuffer.width;
-    print.height = framebuffer.height;
-    print.targetHeight = framebuffer.width / 6;
-    tsgl_framebuffer_clear(&framebuffer, tsgl_color_raw(tsgl_color_fromHex(0x091078), settings.driver->colormode));
-    tsgl_framebuffer_text(&framebuffer, 0, 0, print, "SMART\nSPEAKER");
+    system_bigText(&framebuffer, "SMART\nSPEAKER");
     tsgl_framebuffer_rotate(&framebuffer, 0);
 
     settings.init_state = tsgl_display_init_framebuffer;
@@ -125,9 +129,14 @@ void system_init() {
     right_speaker = tsgl_sound_newDacOutput(RIGHT_SPEAKER_DAC);
     speakers[0] = left_speaker;
     speakers[1] = right_speaker;
+
+    system_playSound("/storage/load.wav");
 }
 
 void system_powerOff() {
+    system_bigText(&framebuffer, "goodbye!");
+    system_waitPlaySound("/storage/shutdown.wav", true);
+
     tsgl_display_setBacklight(&display, 0);
     gpio_config_t io_conf = {};
     io_conf.pin_bit_mask |= 1ULL << POWERLOCK;
@@ -155,9 +164,8 @@ typedef struct {
 static PlaySound playSounds[MAX_SOUND_PLAYS];
 static uint8_t currentPlaySound = 0;
 
-void system_playSound(const char* path) {
+void system_waitPlaySound(const char* path, bool wait) {
     PlaySound* playSound = &playSounds[currentPlaySound];
-    playSound->path = NULL;
 
     if (playSound->path) {
         if (strcmp(path, playSound->path) != 0) {
@@ -182,8 +190,14 @@ void system_playSound(const char* path) {
     tsgl_sound_setVolume(&playSound->sound, 1);
     tsgl_sound_play(&playSound->sound);
 
+    while (wait && playSound->sound.playing) vTaskDelay(1);
+
     currentPlaySound++;
     if (currentPlaySound >= MAX_SOUND_PLAYS) {
         currentPlaySound = 0;
     }
+}
+
+void system_playSound(const char* path) {
+    system_waitPlaySound(path, false);
 }
