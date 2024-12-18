@@ -1,6 +1,5 @@
 #include "desktop.h"
 #include "../system.h"
-#include "../gui.h"
 #include "../apps.h"
 
 #include <TSGL_gui.h>

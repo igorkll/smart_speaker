@@ -21,8 +21,11 @@
 #include <TSGL_spi.h>
 #include <TSGL_i2c.h>
 #include <TSGL_math.h>
+#include <TSGL_gui.h>
 
 #include <TSGL_fonts/default.h>
+
+extern tsgl_gui* gui;
 
 extern tsgl_display display;
 extern tsgl_framebuffer framebuffer;

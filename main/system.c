@@ -1,6 +1,7 @@
 // -------------------------------- display settings
 
 #include "system.h"
+#include "apps.h"
 #include <TSGL_drivers/st77XX.h>
 
 #define SPI    TSGL_HOST1
@@ -49,6 +50,8 @@ static tsgl_display_settings settings = {
 
 // --------------------------------
 
+tsgl_gui* gui;
+
 tsgl_display display;
 tsgl_framebuffer framebuffer;
 tsgl_framebuffer framebuffer2;
@@ -82,9 +85,22 @@ void system_bigText(tsgl_framebuffer* framebuffer, const char* text) {
     tsgl_framebuffer_text(framebuffer, 0, 0, print, text);
 }
 
+static void _loop(void* parameter) {
+    uint8_t oldTouchCount = 0;
+    while (true) {
+        tsgl_keyboard_readAll(&keyboard);
+        tsgl_gui_processTouchscreen(gui, &touchscreen);
+        uint8_t touchCount = tsgl_touchscreen_touchCount(&touchscreen);
+        if (touchCount > 0 && oldTouchCount == 0) {
+            system_playSound("/storage/click.wav");
+        }
+        oldTouchCount = touchCount;
+        tsgl_gui_processGui(gui, NULL, &benchmark, 0);
+    }
+}
+
 void system_init() {
     ESP_ERROR_CHECK(tsgl_framebuffer_init(&framebuffer, settings.driver->colormode, settings.width, settings.height, BUFFER));
-
     tsgl_framebuffer_rotate(&framebuffer, ROTATION);
     system_bigText(&framebuffer, "SMART\nSPEAKER");
     tsgl_framebuffer_rotate(&framebuffer, 0);
@@ -129,12 +145,17 @@ void system_init() {
     right_speaker = tsgl_sound_newDacOutput(RIGHT_SPEAKER_DAC);
     speakers[0] = left_speaker;
     speakers[1] = right_speaker;
-
     system_playSound("/storage/load.wav");
+
+    gui = tsgl_gui_createRoot_buffer(&display, &framebuffer);
+    apps_init();
+    app_desktop_open();
+    xTaskCreate(_loop, NULL, 4096, NULL, 24, NULL);
 }
 
 void system_powerOff() {
     system_bigText(&framebuffer, "goodbye!");
+    tsgl_display_send(&display, &framebuffer);
     system_waitPlaySound("/storage/shutdown.wav", true);
 
     tsgl_display_setBacklight(&display, 0);
@@ -154,7 +175,7 @@ void system_setBlue(uint8_t value) {
 }
 
 
-#define MAX_SOUND_PLAYS 2
+#define MAX_SOUND_PLAYS 4
 
 typedef struct {
     tsgl_sound sound;
@@ -165,7 +186,20 @@ static PlaySound playSounds[MAX_SOUND_PLAYS];
 static uint8_t currentPlaySound = 0;
 
 void system_waitPlaySound(const char* path, bool wait) {
-    PlaySound* playSound = &playSounds[currentPlaySound];
+    PlaySound* playSound = NULL;
+    for (size_t i = 0; i < MAX_SOUND_PLAYS; i++) {
+        PlaySound* lPlaySound = &playSounds[i];
+        if (lPlaySound->path && strcmp(path, lPlaySound->path) == 0) {
+            playSound = &lPlaySound[i];
+            break;
+        }
+    }
+
+    if (playSound == NULL) {
+        playSound = &playSounds[currentPlaySound++];
+        if (currentPlaySound >= MAX_SOUND_PLAYS)
+            currentPlaySound = 0;
+    }
 
     if (playSound->path) {
         if (strcmp(path, playSound->path) != 0) {
@@ -191,11 +225,6 @@ void system_waitPlaySound(const char* path, bool wait) {
     tsgl_sound_play(&playSound->sound);
 
     while (wait && playSound->sound.playing) vTaskDelay(1);
-
-    currentPlaySound++;
-    if (currentPlaySound >= MAX_SOUND_PLAYS) {
-        currentPlaySound = 0;
-    }
 }
 
 void system_playSound(const char* path) {
