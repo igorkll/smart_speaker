@@ -190,18 +190,22 @@ void system_waitPlaySound(const char* path, bool wait) {
     for (size_t i = 0; i < MAX_SOUND_PLAYS; i++) {
         PlaySound* lPlaySound = &playSounds[i];
         if (lPlaySound->path && strcmp(path, lPlaySound->path) == 0) {
+            printf("1 %i\n", i);
             playSound = &lPlaySound[i];
             break;
         }
     }
 
     if (playSound == NULL) {
-        playSound = &playSounds[currentPlaySound++];
+        printf("2 %i\n", currentPlaySound);
+        playSound = &playSounds[currentPlaySound];
+        currentPlaySound++;
         if (currentPlaySound >= MAX_SOUND_PLAYS)
             currentPlaySound = 0;
     }
 
     if (playSound->path) {
+        printf("p %s\n", playSound->path);
         if (strcmp(path, playSound->path) != 0) {
             tsgl_sound_free(&playSound->sound);
             free(playSound->path);
