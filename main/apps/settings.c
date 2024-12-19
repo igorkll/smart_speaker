@@ -11,11 +11,12 @@
 #include <TSGL_gui/tabbar.h>
 
 #define TAB_COUNT 4
+#define TAB_COLOR tsgl_color_fromHex(0x666666)
+#define TAB_COLOR_ENABLE tsgl_color_fromHex(0xcacaca)
+
 const char* settingsPath = "/storage/settings.cfg";
-static const tsgl_pos tab_host_size = 90;
+static const tsgl_pos tabbar_size = 90;
 static const tsgl_pos leverPadding = 14;
-static const uint32_t tabButtonColorEnable = 0xcacaca;
-static const uint32_t tabButtonColorDisable = 0x666666;
 
 static tsgl_gui* scene;
 
@@ -36,10 +37,7 @@ app_settings_struct defaultSettings = {
 static uint8_t currentVersion = 0;
 app_settings_struct currentSettings;
 
-static tsgl_gui* tabButtons[TAB_COUNT];
-static tsgl_gui* tabs[TAB_COUNT];
 static bool needSave = false;
-
 static uint8_t currentTab;
 static uint8_t oldTab;
 static tsgl_pos lastTabY;
@@ -52,34 +50,6 @@ static void resetParams() {
     lastTabY = 5;
     lastIndex = 0;
     lastLeverY = 14;
-}
-
-static void updateTab(uint8_t i) {
-    bool enabled = currentTab == i;
-
-    tsgl_gui* button = tabButtons[i];
-    tsgl_gui* tab = tabs[i];
-
-    button->color = tsgl_color_raw(enabled ? tsgl_color_fromHex(tabButtonColorEnable) : tsgl_color_fromHex(tabButtonColorDisable), gui->colormode);
-    button->needDraw = true;
-
-    tab->interactive = enabled;
-    tab->displayable = enabled;
-    tab->needDraw = enabled;
-}
-
-static void updateTabs() {
-    updateTab(currentTab);
-    updateTab(oldTab);
-    oldTab = currentTab;
-}
-
-static void* callback_onTabChange(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
-    if (arg0 == 1) {
-        currentTab = *((uint8_t*)userArg);
-        updateTabs();
-    }
-    return NULL;
 }
 
 static void* callback_openDesktop(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
@@ -99,31 +69,6 @@ static void* callback_onBoolChange(tsgl_gui* self, int arg0, void* arg1, void* u
     *val = (bool)arg0;
     needSave = true;
     return NULL;
-}
-
-static void addTab(tsgl_gui* tab_host, tsgl_gui* tab, const char* title) {
-    tsgl_gui* tab_button = tsgl_gui_addButton(tab_host);
-    tab_button->x = 5;
-    tab_button->y = lastTabY;
-    tab_button->width = tab_host->width - 10;
-    tab_button->height = 40;
-    tab_button->animationStopEnable = true;
-    tab_button->animationStop = 0;
-    tab_button->user_callback = callback_onTabChange;
-    uint8_t* tabIndex = malloc(sizeof(uint8_t));
-    *tabIndex = lastIndex;
-    tab_button->userArg = tabIndex;
-    tsgl_gui_button_setStyle(tab_button, tsgl_color_fromHex(tabButtonColorDisable), tsgl_color_fromHex(tabButtonColorDisable), tsgl_gui_button_fill);
-    tsgl_gui_button_setText(tab_button, TSGL_WHITE, 8, title, false);
-
-    tabButtons[lastIndex] = tab_button;
-    tabs[lastIndex] = tab;
-
-    tab->interactive = lastIndex == 0;
-    tab->displayable = lastIndex == 0;
-
-    lastTabY += 45;
-    lastIndex++;
 }
 
 static tsgl_pos leverPos;
@@ -155,13 +100,13 @@ static void addTitleLever(tsgl_gui* tab, const char* title, bool* parameter) {
     lastLeverY += 32 + leverPadding;
 }
 
-tsgl_gui* newTab() {
+static tsgl_gui* newTab() {
     tsgl_gui* tab = tsgl_gui_addObject(scene);
-    tab->x = tab_host_size;
+    tab->x = tabbar_size;
     tab->y = 50;
-    tab->width = gui->width - tab_host_size;
+    tab->width = gui->width - tabbar_size;
     tab->height = gui->height - 50;
-    tab->color = tsgl_color_raw(tsgl_color_fromHex(0xa0a0a0), gui->colormode);;
+    tab->color = tsgl_color_raw(tsgl_color_fromHex(0xa0a0a0), gui->colormode);
     return tab;
 }
 
@@ -185,7 +130,7 @@ static void _initGui() {
     back->height = 40;
     back->user_callback = callback_openDesktop;
     tsgl_gui_setOffsetFromBorder(back, tsgl_gui_offsetFromBorder_center_left, 5, 0);
-    tsgl_gui_button_setStyle(back, tsgl_color_fromHex(tabButtonColorEnable), tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
+    tsgl_gui_button_setStyle(back, TAB_COLOR_ENABLE, tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
     tsgl_gui_button_setText(back, TSGL_WHITE, 8, "< back", false);
 
     tsgl_gui* text = tsgl_gui_addText(plate_up);
@@ -204,17 +149,18 @@ static void _initGui() {
 
     // --------------------------------------- tab host
 
-    tsgl_gui* tab_host = tsgl_gui_addObject(scene);
-    tsgl_gui_setAllFormat(tab_host, tsgl_gui_absolute);
-    tab_host->color = tsgl_color_raw(tsgl_color_fromHex(0x2c2c2c), gui->colormode);
-    tab_host->x = 0;
-    tab_host->y = 50;
-    tab_host->width = tab_host_size;
-    tab_host->height = scene->height - 50;
+    tsgl_gui* tabbar = tsgl_gui_addTabbar(scene, false, 5, 5, 40);
+    tsgl_gui_setAllFormat(tabbar, tsgl_gui_absolute);
+    tabbar->color = tsgl_color_raw(tsgl_color_fromHex(0x2c2c2c), gui->colormode);
+    tabbar->x = 0;
+    tabbar->y = 50;
+    tabbar->width = tabbar_size;
+    tabbar->height = scene->height - 50;
 
     // --------------------------------------- sound tab
 
     tsgl_gui* tab = newTab();
+
     const char* longName = "disconnect";
     tsgl_print_textArea textArea = tsgl_font_getTextArea(0, 0, (tsgl_print_settings) {
         .fill = TSGL_INVALID_RAWCOLOR,
@@ -232,50 +178,42 @@ static void _initGui() {
     addTitleLever(tab, "click", &currentSettings.sound_enable_click);
     addTitleLever(tab, "connect", &currentSettings.sound_enable_connect);
     addTitleLever(tab, longName, &currentSettings.sound_enable_disconnect);
-    addTab(tab_host, tab, "sound");
+
+    tsgl_gui* tabButton = tsgl_gui_tabbar_addTab(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
+    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
+    tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "sound", false);
 
     // --------------------------------------- gui tab
 
     tab = newTab();
-    addTab(tab_host, tab, "gui");
+
+    tabButton = tsgl_gui_tabbar_addTab(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
+    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
+    tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "gui", false);
 
     // --------------------------------------- connect tab
 
     tab = newTab();
-    addTab(tab_host, tab, "connect");
+
+    tabButton = tsgl_gui_tabbar_addTab(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
+    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
+    tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "connect", false);
 
     // --------------------------------------- power tab
 
     tab = newTab();
-    
-    tsgl_gui* tabbar = tsgl_gui_addTabbar(tab, false, 5, 5, 30);
-    tabbar->x = 5;
-    tabbar->y = 5;
-    tabbar->width = 100;
-    tabbar->height = 100;
-    tabbar->color = tsgl_color_raw(TSGL_BLUE, tabbar->colormode);
 
-    tsgl_gui* tabButton = tsgl_gui_tabbar_addTab(tabbar, TSGL_BLACK, TSGL_WHITE);
+    back = tsgl_gui_addButton(tab);
+    back->width = 80;
+    back->height = 40;
+    back->user_callback = callback_openDesktop;
+    tsgl_gui_setOffsetFromBorder(back, tsgl_gui_offsetFromBorder_center_left, 5, 0);
+    tsgl_gui_button_setStyle(back, TAB_COLOR_ENABLE, tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
+    tsgl_gui_button_setText(back, TSGL_WHITE, 8, "< back", false);
+
+    tabButton = tsgl_gui_tabbar_addTab(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
     tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
-    tsgl_gui_button_setText(tabButton, TSGL_RED, 8, "TAB 1", false);
-
-    tabButton = tsgl_gui_tabbar_addTab(tabbar, TSGL_BLACK, TSGL_WHITE);
-    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
-    tsgl_gui_button_setText(tabButton, TSGL_RED, 8, "TAB 2", false);
-
-    tabButton = tsgl_gui_tabbar_addTab(tabbar, TSGL_BLACK, TSGL_WHITE);
-    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
-    tsgl_gui_button_setText(tabButton, TSGL_RED, 8, "TAB 3", false);
-
-    tabButton = tsgl_gui_tabbar_addTab(tabbar, TSGL_BLACK, TSGL_WHITE);
-    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
-    tsgl_gui_button_setText(tabButton, TSGL_RED, 8, "TAB 3", false);
-
-    addTab(tab_host, tab, "power");
-
-    // ---------------------------------------
-
-    updateTabs();
+    tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "power", false);
 }
 
 void app_settings_init() {
