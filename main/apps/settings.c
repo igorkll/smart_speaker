@@ -9,6 +9,13 @@
 #include <TSGL_gui/text.h>
 #include <TSGL_gui/lever.h>
 
+#define TAB_COUNT 4
+const char* settingsPath = "/storage/settings.cfg";
+static const tsgl_pos tab_host_size = 90;
+static const tsgl_pos leverPadding = 14;
+static const uint32_t tabButtonColorEnable = 0xcacaca;
+static const uint32_t tabButtonColorDisable = 0x666666;
+
 static tsgl_gui* scene;
 
 app_settings_struct defaultSettings = {
@@ -25,19 +32,26 @@ app_settings_struct defaultSettings = {
     .sound_volume_disconnect = 1
 };
 
-const char* settingsPath = "/storage/settings.cfg";
 static uint8_t currentVersion = 0;
 app_settings_struct currentSettings;
 
-#define TAB_COUNT 4
-static uint8_t currentTab = 0;
-static uint8_t oldTab = 0;
 static tsgl_gui* tabButtons[TAB_COUNT];
 static tsgl_gui* tabs[TAB_COUNT];
-static uint32_t tabButtonColorEnable = 0xcacaca;
-static uint32_t tabButtonColorDisable = 0x666666;
-static const tsgl_pos tab_host_size = 90;
 static bool needSave = false;
+
+static uint8_t currentTab;
+static uint8_t oldTab;
+static tsgl_pos lastTabY;
+static size_t lastIndex;
+static tsgl_pos lastLeverY;
+
+static void resetParams() {
+    currentTab = 0;
+    oldTab = 0;
+    lastTabY = 5;
+    lastIndex = 0;
+    lastLeverY = 14;
+}
 
 static void updateTab(uint8_t i) {
     bool enabled = currentTab == i;
@@ -70,6 +84,7 @@ static void* callback_onTabChange(tsgl_gui* self, int arg0, void* arg1, void* us
 static void* callback_openDesktop(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
     if (arg0 == 0) {
         if (needSave) {
+            tsgl_gui_free(scene);
             app_settings_save();
             needSave = false;
         }
@@ -85,8 +100,6 @@ static void* callback_onBoolChange(tsgl_gui* self, int arg0, void* arg1, void* u
     return NULL;
 }
 
-static tsgl_pos lastTabY = 5;
-static size_t lastIndex = 0;
 static void addTab(tsgl_gui* tab_host, tsgl_gui* tab, const char* title) {
     tsgl_gui* tab_button = tsgl_gui_addButton(tab_host);
     tab_button->x = 5;
@@ -113,8 +126,6 @@ static void addTab(tsgl_gui* tab_host, tsgl_gui* tab, const char* title) {
 }
 
 static tsgl_pos leverPos;
-static const tsgl_pos leverPadding = 14;
-static tsgl_pos lastLeverY = 14;
 static void addTitleLever(tsgl_gui* tab, const char* title, bool* parameter) {
     tsgl_gui* text = tsgl_gui_addText(tab);
     tsgl_gui_setOffsetFromBorder(text, tsgl_gui_offsetFromBorder_up_left, 10, lastLeverY);
@@ -153,20 +164,8 @@ tsgl_gui* newTab() {
     return tab;
 }
 
-void app_settings_init() {
-    FILE* file = tsgl_filesystem_open(settingsPath, "rb");
-    if (file) {
-        uint8_t realVersion;
-        fread(&realVersion, 1, 1, file);
-        if (realVersion == currentVersion) {
-            fread(&currentSettings, 1, sizeof(app_settings_struct), file);
-        } else {
-            memcpy(&currentSettings, &defaultSettings, sizeof(app_settings_struct));
-        }
-        fclose(file);
-    } else {
-        memcpy(&currentSettings, &defaultSettings, sizeof(app_settings_struct));
-    }
+static void _initGui() {
+    resetParams();
 
     // --------------------------------------- create scene
 
@@ -254,7 +253,24 @@ void app_settings_init() {
     updateTabs();
 }
 
+void app_settings_init() {
+    FILE* file = tsgl_filesystem_open(settingsPath, "rb");
+    if (file) {
+        uint8_t realVersion;
+        fread(&realVersion, 1, 1, file);
+        if (realVersion == currentVersion) {
+            fread(&currentSettings, 1, sizeof(app_settings_struct), file);
+        } else {
+            memcpy(&currentSettings, &defaultSettings, sizeof(app_settings_struct));
+        }
+        fclose(file);
+    } else {
+        memcpy(&currentSettings, &defaultSettings, sizeof(app_settings_struct));
+    }
+}
+
 void app_settings_open() {
+    _initGui();
     tsgl_gui_select(scene);
 }
 
