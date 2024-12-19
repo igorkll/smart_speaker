@@ -20,3 +20,4 @@ extern app_settings_struct currentSettings;
 
 void app_settings_init();
 void app_settings_open();
+void app_settings_save();

@@ -7,6 +7,7 @@
 #include <TSGL_gui/sprite.h>
 #include <TSGL_gui/colorpicker.h>
 #include <TSGL_gui/text.h>
+#include <TSGL_gui/lever.h>
 
 static tsgl_gui* scene;
 
@@ -109,6 +110,13 @@ static void* callback_openDesktop(tsgl_gui* self, int arg0, void* arg1, void* us
     return NULL;
 }
 
+static void* callback_onBoolChange(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
+    bool* val = userArg;
+    *val = (bool)arg0;
+    app_settings_save();
+    return NULL;
+}
+
 void app_settings_init() {
     FILE* file = tsgl_filesystem_open(settingsPath, "rb");
     if (file) {
@@ -185,6 +193,14 @@ void app_settings_init() {
         .globalCentering = false,
         .targetWidth = 12
     });
+    tsgl_print_textArea textArea = tsgl_gui_text_getTextArea(text);
+
+    tsgl_gui* lever = tsgl_gui_addLever(tab, currentSettings.sound_volume_click);
+    lever->width = 80;
+    lever->height = 20;
+    tsgl_gui_setOffsetFromBorder(lever, tsgl_gui_offsetFromBorder_up_left, text->x + 10 + textArea.right, 6);
+    back->user_callback = callback_onBoolChange;
+    back->userArg = &currentSettings.sound_volume_click;
 
     addTab(tab_host, tab, "sound");
 
