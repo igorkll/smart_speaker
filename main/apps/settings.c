@@ -66,6 +66,20 @@ static void* callback_onTabChange(tsgl_gui* self, int arg0, void* arg1, void* us
     return NULL;
 }
 
+static void* callback_openDesktop(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
+    if (arg0 == 0) {
+        app_desktop_open();
+    }
+    return NULL;
+}
+
+static void* callback_onBoolChange(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
+    bool* val = userArg;
+    *val = (bool)arg0;
+    app_settings_save();
+    return NULL;
+}
+
 static tsgl_pos lastTabY = 5;
 static size_t lastIndex = 0;
 static void addTab(tsgl_gui* tab_host, tsgl_gui* tab, const char* title) {
@@ -93,6 +107,33 @@ static void addTab(tsgl_gui* tab_host, tsgl_gui* tab, const char* title) {
     lastIndex++;
 }
 
+static const tsgl_pos leverPadding = 14;
+static tsgl_pos lastLeverY = 14;
+static void addTitleLever(tsgl_gui* tab, const char* title, bool* parameter) {
+    tsgl_gui* text = tsgl_gui_addText(tab);
+    tsgl_gui_setOffsetFromBorder(text, tsgl_gui_offsetFromBorder_up_left, 10, lastLeverY);
+    tsgl_gui_text_setText(text, title, false);
+    tsgl_gui_text_setParams(text, (tsgl_print_settings) {
+        .fill = TSGL_INVALID_RAWCOLOR,
+        .bg = TSGL_INVALID_RAWCOLOR,
+        .fg = tsgl_color_raw(TSGL_WHITE, text->colormode),
+        .font = tsgl_font_defaultFont,
+        .locationMode = tsgl_print_start_top,
+        .multiline = false,
+        .globalCentering = false,
+        .targetWidth = 12
+    });
+
+    tsgl_gui* lever = tsgl_gui_addLever(tab, *parameter);
+    tsgl_gui_setOffsetFromBorder(lever, tsgl_gui_offsetFromBorder_up_right, 0, text->y - 8);
+    lever->width = 80;
+    lever->height = 32;
+    lever->user_callback = callback_onBoolChange;
+    lever->userArg = parameter;
+
+    lastLeverY += 32 + leverPadding;
+}
+
 tsgl_gui* newTab() {
     tsgl_gui* tab = tsgl_gui_addObject(scene);
     tab->x = tab_host_size;
@@ -101,20 +142,6 @@ tsgl_gui* newTab() {
     tab->height = gui->height - 50;
     tab->color = tsgl_color_raw(tsgl_color_fromHex(0xa0a0a0), gui->colormode);;
     return tab;
-}
-
-static void* callback_openDesktop(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
-    if (arg0 == 0) {
-        app_desktop_open();
-    }
-    return NULL;
-}
-
-static void* callback_onBoolChange(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
-    bool* val = userArg;
-    *val = (bool)arg0;
-    app_settings_save();
-    return NULL;
 }
 
 void app_settings_init() {
@@ -179,29 +206,11 @@ void app_settings_init() {
     // --------------------------------------- sound tab
 
     tsgl_gui* tab = newTab();
-
-    text = tsgl_gui_addText(tab);
-    tsgl_gui_setOffsetFromBorder(text, tsgl_gui_offsetFromBorder_up_left, 10, 10);
-    tsgl_gui_text_setText(text, "click sound:", false);
-    tsgl_gui_text_setParams(text, (tsgl_print_settings) {
-        .fill = TSGL_INVALID_RAWCOLOR,
-        .bg = TSGL_INVALID_RAWCOLOR,
-        .fg = tsgl_color_raw(TSGL_WHITE, text->colormode),
-        .font = tsgl_font_defaultFont,
-        .locationMode = tsgl_print_start_top,
-        .multiline = false,
-        .globalCentering = false,
-        .targetWidth = 12
-    });
-    tsgl_print_textArea textArea = tsgl_gui_text_getTextArea(text);
-
-    tsgl_gui* lever = tsgl_gui_addLever(tab, currentSettings.sound_volume_click);
-    lever->width = 80;
-    lever->height = 20;
-    tsgl_gui_setOffsetFromBorder(lever, tsgl_gui_offsetFromBorder_up_left, text->x + 10 + textArea.right, 6);
-    back->user_callback = callback_onBoolChange;
-    back->userArg = &currentSettings.sound_volume_click;
-
+    addTitleLever(tab, "load sound:", &currentSettings.sound_enable_load);
+    addTitleLever(tab, "shutdown sound:", &currentSettings.sound_enable_shutdown);
+    addTitleLever(tab, "click sound:", &currentSettings.sound_enable_click);
+    addTitleLever(tab, "connect sound:", &currentSettings.sound_enable_connect);
+    addTitleLever(tab, "disconnect sound:", &currentSettings.sound_enable_disconnect);
     addTab(tab_host, tab, "sound");
 
     // --------------------------------------- gui tab
