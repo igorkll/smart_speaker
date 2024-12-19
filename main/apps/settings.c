@@ -34,7 +34,7 @@ static uint8_t currentTab = 0;
 static uint8_t oldTab = 0;
 static tsgl_gui* tabButtons[TAB_COUNT];
 static tsgl_gui* tabs[TAB_COUNT];
-static uint32_t tabButtonColorEnable = 0xcccccc;
+static uint32_t tabButtonColorEnable = 0xcacaca;
 static uint32_t tabButtonColorDisable = 0x666666;
 static const tsgl_pos tab_host_size = 90;
 static bool needSave = false;
@@ -131,6 +131,8 @@ static void addTitleLever(tsgl_gui* tab, const char* title, bool* parameter) {
     });
 
     tsgl_gui* lever = tsgl_gui_addLever(tab, *parameter);
+    tsgl_rawcolor bodyColor = tsgl_color_raw(tsgl_color_fromHex(0x656565), lever->colormode);
+    tsgl_gui_lever_setParams(lever, bodyColor, tsgl_color_raw(TSGL_WHITE, lever->colormode), bodyColor, tsgl_color_raw(TSGL_GREEN, lever->colormode));
     lever->x = leverPos;
     lever->y = text->y - 8;
     lever->width = 80;
@@ -183,7 +185,7 @@ void app_settings_init() {
     back->height = 40;
     back->user_callback = callback_openDesktop;
     tsgl_gui_setOffsetFromBorder(back, tsgl_gui_offsetFromBorder_center_left, 5, 0);
-    tsgl_gui_button_setStyle(back, tsgl_color_fromHex(0xcacaca), tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
+    tsgl_gui_button_setStyle(back, tsgl_color_fromHex(tabButtonColorEnable), tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
     tsgl_gui_button_setText(back, TSGL_WHITE, 8, "< back", false);
 
     tsgl_gui* text = tsgl_gui_addText(plate_up);
@@ -220,12 +222,11 @@ void app_settings_init() {
         .fg = TSGL_INVALID_RAWCOLOR,
         .font = tsgl_font_defaultFont,
         .locationMode = tsgl_print_start_top,
-        .multiline = true,
-        .globalCentering = true,
+        .multiline = false,
+        .globalCentering = false,
         .targetWidth = 12
     }, longName);
-    printf("%i %i %i %i\n", textArea.top, textArea.bottom, textArea.left, textArea.right);
-    leverPos = textArea.right + 10;
+    leverPos = textArea.right + 10 + 10;
     addTitleLever(tab, "load", &currentSettings.sound_enable_load);
     addTitleLever(tab, "shutdown", &currentSettings.sound_enable_shutdown);
     addTitleLever(tab, "click", &currentSettings.sound_enable_click);
