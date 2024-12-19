@@ -37,6 +37,7 @@ static tsgl_gui* tabs[TAB_COUNT];
 static uint32_t tabButtonColorEnable = 0xcccccc;
 static uint32_t tabButtonColorDisable = 0x666666;
 static const tsgl_pos tab_host_size = 90;
+static bool needSave = false;
 
 static void updateTab(uint8_t i) {
     bool enabled = currentTab == i;
@@ -68,6 +69,10 @@ static void* callback_onTabChange(tsgl_gui* self, int arg0, void* arg1, void* us
 
 static void* callback_openDesktop(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
     if (arg0 == 0) {
+        if (needSave) {
+            app_settings_save();
+            needSave = false;
+        }
         app_desktop_open();
     }
     return NULL;
@@ -76,7 +81,7 @@ static void* callback_openDesktop(tsgl_gui* self, int arg0, void* arg1, void* us
 static void* callback_onBoolChange(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
     bool* val = userArg;
     *val = (bool)arg0;
-    app_settings_save();
+    needSave = true;
     return NULL;
 }
 
@@ -107,6 +112,7 @@ static void addTab(tsgl_gui* tab_host, tsgl_gui* tab, const char* title) {
     lastIndex++;
 }
 
+static tsgl_pos leverPos;
 static const tsgl_pos leverPadding = 14;
 static tsgl_pos lastLeverY = 14;
 static void addTitleLever(tsgl_gui* tab, const char* title, bool* parameter) {
@@ -125,7 +131,8 @@ static void addTitleLever(tsgl_gui* tab, const char* title, bool* parameter) {
     });
 
     tsgl_gui* lever = tsgl_gui_addLever(tab, *parameter);
-    tsgl_gui_setOffsetFromBorder(lever, tsgl_gui_offsetFromBorder_up_right, 0, text->y - 8);
+    lever->x = leverPos;
+    lever->y = text->y - 8;
     lever->width = 80;
     lever->height = 32;
     lever->user_callback = callback_onBoolChange;
@@ -206,11 +213,24 @@ void app_settings_init() {
     // --------------------------------------- sound tab
 
     tsgl_gui* tab = newTab();
-    addTitleLever(tab, "load sound:", &currentSettings.sound_enable_load);
-    addTitleLever(tab, "shutdown sound:", &currentSettings.sound_enable_shutdown);
-    addTitleLever(tab, "click sound:", &currentSettings.sound_enable_click);
-    addTitleLever(tab, "connect sound:", &currentSettings.sound_enable_connect);
-    addTitleLever(tab, "disconnect sound:", &currentSettings.sound_enable_disconnect);
+    const char* longName = "disconnect";
+    tsgl_print_textArea textArea = tsgl_font_getTextArea(0, 0, (tsgl_print_settings) {
+        .fill = TSGL_INVALID_RAWCOLOR,
+        .bg = TSGL_INVALID_RAWCOLOR,
+        .fg = TSGL_INVALID_RAWCOLOR,
+        .font = tsgl_font_defaultFont,
+        .locationMode = tsgl_print_start_top,
+        .multiline = true,
+        .globalCentering = true,
+        .targetWidth = 12
+    }, longName);
+    printf("%i %i %i %i\n", textArea.top, textArea.bottom, textArea.left, textArea.right);
+    leverPos = textArea.right + 10;
+    addTitleLever(tab, "load", &currentSettings.sound_enable_load);
+    addTitleLever(tab, "shutdown", &currentSettings.sound_enable_shutdown);
+    addTitleLever(tab, "click", &currentSettings.sound_enable_click);
+    addTitleLever(tab, "connect", &currentSettings.sound_enable_connect);
+    addTitleLever(tab, longName, &currentSettings.sound_enable_disconnect);
     addTab(tab_host, tab, "sound");
 
     // --------------------------------------- gui tab
