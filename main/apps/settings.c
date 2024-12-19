@@ -8,6 +8,7 @@
 #include <TSGL_gui/colorpicker.h>
 #include <TSGL_gui/text.h>
 #include <TSGL_gui/lever.h>
+#include <TSGL_gui/tabbar.h>
 
 #define TAB_COUNT 4
 const char* settingsPath = "/storage/settings.cfg";
@@ -246,6 +247,30 @@ static void _initGui() {
     // --------------------------------------- power tab
 
     tab = newTab();
+    
+    tsgl_gui* tabbar = tsgl_gui_addTabbar(tab, false, 5, 5, 30);
+    tabbar->x = 5;
+    tabbar->y = 5;
+    tabbar->width = 100;
+    tabbar->height = 100;
+    tabbar->color = tsgl_color_raw(TSGL_BLUE, tabbar->colormode);
+
+    tsgl_gui* tabButton = tsgl_gui_tabbar_addTab(tabbar, TSGL_BLACK, TSGL_WHITE);
+    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
+    tsgl_gui_button_setText(tabButton, TSGL_RED, 8, "TAB 1", false);
+
+    tabButton = tsgl_gui_tabbar_addTab(tabbar, TSGL_BLACK, TSGL_WHITE);
+    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
+    tsgl_gui_button_setText(tabButton, TSGL_RED, 8, "TAB 2", false);
+
+    tabButton = tsgl_gui_tabbar_addTab(tabbar, TSGL_BLACK, TSGL_WHITE);
+    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
+    tsgl_gui_button_setText(tabButton, TSGL_RED, 8, "TAB 3", false);
+
+    tabButton = tsgl_gui_tabbar_addTab(tabbar, TSGL_BLACK, TSGL_WHITE);
+    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
+    tsgl_gui_button_setText(tabButton, TSGL_RED, 8, "TAB 3", false);
+
     addTab(tab_host, tab, "power");
 
     // ---------------------------------------
