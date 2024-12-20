@@ -100,14 +100,68 @@ static void addTitleLever(tsgl_gui* tab, const char* title, bool* parameter) {
     lastLeverY += 32 + leverPadding;
 }
 
-static tsgl_gui* newTab() {
-    tsgl_gui* tab = tsgl_gui_addObject(scene);
-    tab->x = tabbar_size;
-    tab->y = 50;
-    tab->width = gui->width - tabbar_size;
-    tab->height = gui->height - 50;
-    tab->color = tsgl_color_raw(tsgl_color_fromHex(0xa0a0a0), gui->colormode);
-    return tab;
+static void _connectTabbar(tsgl_gui* host) {
+    tsgl_gui* tabbar = tsgl_gui_addTabbar(host, true, 5, 5, 80);
+    tsgl_gui_setAllFormat(tabbar, tsgl_gui_absolute);
+    tabbar->color = tsgl_color_raw(tsgl_color_fromHex(0x2c2c2c), gui->colormode);
+    tabbar->height = 50;
+
+    // ----------------- BT host
+
+    tsgl_gui* inlineTab = tsgl_gui_tabbar_addTabObject(tabbar, false);
+    inlineTab->color = scene->color;
+
+
+
+    tsgl_gui* tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, inlineTab);
+    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
+    tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "BT host", false);
+
+    // ----------------- BT
+
+    inlineTab = tsgl_gui_tabbar_addTabObject(tabbar, false);
+    inlineTab->color = scene->color;
+
+    tsgl_gui* back = tsgl_gui_addButton(inlineTab);
+    back->width = 80;
+    back->height = 40;
+    back->user_callback = callback_openDesktop;
+    tsgl_gui_setOffsetFromBorder(back, tsgl_gui_offsetFromBorder_center_left, 5, 0);
+    tsgl_gui_button_setStyle(back, TAB_COLOR_ENABLE, tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
+    tsgl_gui_button_setText(back, TSGL_RED, 8, "< back", false);
+
+
+    tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, inlineTab);
+    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
+    tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "BT", false);
+
+    // ----------------- wifi host
+
+    inlineTab = tsgl_gui_tabbar_addTabObject(tabbar, false);
+    inlineTab->color = scene->color;
+
+
+
+    tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, inlineTab);
+    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
+    tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "wifi host", false);
+
+    // ----------------- wifi
+
+    inlineTab = tsgl_gui_tabbar_addTabObject(tabbar, false);
+    inlineTab->color = scene->color;
+
+    back = tsgl_gui_addButton(inlineTab);
+    back->width = 80;
+    back->height = 40;
+    back->user_callback = callback_openDesktop;
+    tsgl_gui_setOffsetFromBorder(back, tsgl_gui_offsetFromBorder_center_left, 5, 0);
+    tsgl_gui_button_setStyle(back, TAB_COLOR_ENABLE, tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
+    tsgl_gui_button_setText(back, TSGL_WHITE, 8, "< back", false);
+
+    tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, inlineTab);
+    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
+    tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "wifi", false);
 }
 
 static void _initGui() {
@@ -159,7 +213,8 @@ static void _initGui() {
 
     // --------------------------------------- sound tab
 
-    tsgl_gui* tab = newTab();
+    tsgl_gui* tab = tsgl_gui_tabbar_addTabObject(tabbar, false);
+    tab->color = scene->color;
 
     const char* longName = "disconnect";
     tsgl_print_textArea textArea = tsgl_font_getTextArea(0, 0, (tsgl_print_settings) {
@@ -179,39 +234,36 @@ static void _initGui() {
     addTitleLever(tab, "connect", &currentSettings.sound_enable_connect);
     addTitleLever(tab, longName, &currentSettings.sound_enable_disconnect);
 
-    tsgl_gui* tabButton = tsgl_gui_tabbar_addTab(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
+    tsgl_gui* tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
     tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
     tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "sound", false);
 
     // --------------------------------------- gui tab
 
-    tab = newTab();
+    tab = tsgl_gui_tabbar_addTabObject(tabbar, false);
+    tab->color = scene->color;
 
-    tabButton = tsgl_gui_tabbar_addTab(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
+    tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
     tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
     tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "gui", false);
 
     // --------------------------------------- connect tab
 
-    tab = newTab();
+    tab = tsgl_gui_tabbar_addTabObject(tabbar, false);
+    tab->color = scene->color;
 
-    tabButton = tsgl_gui_tabbar_addTab(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
+    _connectTabbar(tab);
+
+    tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
     tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
     tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "connect", false);
 
     // --------------------------------------- power tab
 
-    tab = newTab();
+    tab = tsgl_gui_tabbar_addTabObject(tabbar, false);
+    tab->color = scene->color;
 
-    back = tsgl_gui_addButton(tab);
-    back->width = 80;
-    back->height = 40;
-    back->user_callback = callback_openDesktop;
-    tsgl_gui_setOffsetFromBorder(back, tsgl_gui_offsetFromBorder_center_left, 5, 0);
-    tsgl_gui_button_setStyle(back, TAB_COLOR_ENABLE, tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
-    tsgl_gui_button_setText(back, TSGL_WHITE, 8, "< back", false);
-
-    tabButton = tsgl_gui_tabbar_addTab(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
+    tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
     tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
     tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "power", false);
 }
