@@ -52,9 +52,11 @@ static void resetParams() {
     lastLeverY = 14;
 }
 
+static TaskHandle_t infoUpdateTask_handle;
 static void* callback_openDesktop(tsgl_gui* self, int arg0, void* arg1, void* userArg) {
     if (arg0 == 0) {
         if (needSave) {
+            vTaskDelete(infoUpdateTask_handle);
             tsgl_gui_free(scene);
             app_settings_save();
             needSave = false;
@@ -183,34 +185,55 @@ static void _tab_connect(tsgl_gui* host) {
     tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "wifi", false);
 }
 
+static tsgl_gui* infoTab;
+static tsgl_gui* ramInfo;
+static tsgl_gui* romInfo;
 static void _tab_info(tsgl_gui* host) {
-    tsgl_gui* text = tsgl_gui_addText(host);
-    tsgl_gui_setOffsetFromBorder(text, tsgl_gui_offsetFromBorder_up_left, 5, 5);
-    tsgl_gui_text_setParams(text, (tsgl_print_settings) {
+    ramInfo = tsgl_gui_addText(host);
+    tsgl_gui_setOffsetFromBorder(ramInfo, tsgl_gui_offsetFromBorder_up_left, 5, 5);
+    tsgl_gui_text_setParams(ramInfo, (tsgl_print_settings) {
         .fill = TSGL_INVALID_RAWCOLOR,
         .bg = TSGL_INVALID_RAWCOLOR,
-        .fg = tsgl_color_raw(TSGL_WHITE, text->colormode),
+        .fg = tsgl_color_raw(TSGL_WHITE, ramInfo->colormode),
         .font = tsgl_font_defaultFont,
         .locationMode = tsgl_print_start_top,
         .multiline = false,
         .globalCentering = false,
         .targetWidth = 12
     });
-    tsgl_gui_text_setText(text, "RAM: 1024 / 421", false);
 
-    text = tsgl_gui_addText(host);
-    tsgl_gui_setOffsetFromBorder(text, tsgl_gui_offsetFromBorder_up_left, 5, 5 + 5 + 12);
-    tsgl_gui_text_setParams(text, (tsgl_print_settings) {
+    romInfo = tsgl_gui_addText(host);
+    tsgl_gui_setOffsetFromBorder(romInfo, tsgl_gui_offsetFromBorder_up_left, 5, 5 + 5 + 12);
+    tsgl_gui_text_setParams(romInfo, (tsgl_print_settings) {
         .fill = TSGL_INVALID_RAWCOLOR,
         .bg = TSGL_INVALID_RAWCOLOR,
-        .fg = tsgl_color_raw(TSGL_WHITE, text->colormode),
+        .fg = tsgl_color_raw(TSGL_WHITE, romInfo->colormode),
         .font = tsgl_font_defaultFont,
         .locationMode = tsgl_print_start_top,
         .multiline = false,
         .globalCentering = false,
         .targetWidth = 12
     });
-    tsgl_gui_text_setText(text, "ROM: 2048 / 841", false);
+}
+
+static void _infoUpdateTask(void *pvParameters) {
+    char ramTitle[64];
+    char romTitle[64];
+
+    while (true) {
+        multi_heap_info_t info;
+        heap_caps_get_info(&info, MALLOC_CAP_INTERNAL);
+
+        int totalRam = info.total_allocated_bytes + info.total_free_bytes;
+        sprintf(ramTitle, "RAM: %iKB / %iKB = %i%%", totalRam / 1024, info.total_allocated_bytes / 1024, (int)((((((float)info.total_allocated_bytes) / (float)totalRam)) * 100.0) + 0.5));
+        tsgl_gui_text_setText(ramInfo, ramTitle, false);
+
+        sprintf(romTitle, "ROM: %iKB / %iKB", 1, 1);
+        tsgl_gui_text_setText(romInfo, romTitle, false);
+
+        infoTab->needDraw = true;
+        tsgl_delay(100);
+    }
 }
 
 static void _initGui() {
@@ -302,12 +325,12 @@ static void _initGui() {
 
     // --------------------------------------- info tab
 
-    tab = tsgl_gui_tabbar_addTabObject(tabbar, false);
-    tab->color = scene->color;
+    infoTab = tsgl_gui_tabbar_addTabObject(tabbar, false);
+    infoTab->color = scene->color;
 
-    _tab_info(tab);
+    _tab_info(infoTab);
 
-    tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
+    tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, infoTab);
     tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
     tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "info", false);
 }
@@ -330,6 +353,7 @@ void app_settings_init() {
 
 void app_settings_open() {
     _initGui();
+    xTaskCreate(_infoUpdateTask, NULL, 4096, NULL, 1, &infoUpdateTask_handle);
     tsgl_gui_select(scene);
 }
 
