@@ -100,7 +100,27 @@ static void addTitleLever(tsgl_gui* tab, const char* title, bool* parameter) {
     lastLeverY += 32 + leverPadding;
 }
 
-static void _connectTabbar(tsgl_gui* host) {
+static void _tab_sound(tsgl_gui* host) {
+    const char* longName = "disconnect";
+    tsgl_print_textArea textArea = tsgl_font_getTextArea(0, 0, (tsgl_print_settings) {
+        .fill = TSGL_INVALID_RAWCOLOR,
+        .bg = TSGL_INVALID_RAWCOLOR,
+        .fg = TSGL_INVALID_RAWCOLOR,
+        .font = tsgl_font_defaultFont,
+        .locationMode = tsgl_print_start_top,
+        .multiline = false,
+        .globalCentering = false,
+        .targetWidth = 12
+    }, longName);
+    leverPos = textArea.right + 10 + 10;
+    addTitleLever(host, "load", &currentSettings.sound_enable_load);
+    addTitleLever(host, "shutdown", &currentSettings.sound_enable_shutdown);
+    addTitleLever(host, "click", &currentSettings.sound_enable_click);
+    addTitleLever(host, "connect", &currentSettings.sound_enable_connect);
+    addTitleLever(host, longName, &currentSettings.sound_enable_disconnect);
+}
+
+static void _tab_connect(tsgl_gui* host) {
     tsgl_gui* tabbar = tsgl_gui_addTabbar(host, true, 5, 5, 80);
     tsgl_gui_setAllFormat(tabbar, tsgl_gui_absolute);
     tabbar->color = tsgl_color_raw(tsgl_color_fromHex(0x2c2c2c), gui->colormode);
@@ -129,7 +149,6 @@ static void _connectTabbar(tsgl_gui* host) {
     tsgl_gui_setOffsetFromBorder(back, tsgl_gui_offsetFromBorder_center_left, 5, 0);
     tsgl_gui_button_setStyle(back, TAB_COLOR_ENABLE, tsgl_color_fromHex(0xa0a0a0), tsgl_gui_button_fill);
     tsgl_gui_button_setText(back, TSGL_RED, 8, "< back", false);
-
 
     tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, inlineTab);
     tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
@@ -162,6 +181,36 @@ static void _connectTabbar(tsgl_gui* host) {
     tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, inlineTab);
     tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
     tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "wifi", false);
+}
+
+static void _tab_info(tsgl_gui* host) {
+    tsgl_gui* text = tsgl_gui_addText(host);
+    tsgl_gui_setOffsetFromBorder(text, tsgl_gui_offsetFromBorder_up_left, 5, 5);
+    tsgl_gui_text_setParams(text, (tsgl_print_settings) {
+        .fill = TSGL_INVALID_RAWCOLOR,
+        .bg = TSGL_INVALID_RAWCOLOR,
+        .fg = tsgl_color_raw(TSGL_WHITE, text->colormode),
+        .font = tsgl_font_defaultFont,
+        .locationMode = tsgl_print_start_top,
+        .multiline = false,
+        .globalCentering = false,
+        .targetWidth = 12
+    });
+    tsgl_gui_text_setText(text, "RAM: 1024 / 421", false);
+
+    text = tsgl_gui_addText(host);
+    tsgl_gui_setOffsetFromBorder(text, tsgl_gui_offsetFromBorder_up_left, 5, 5 + 5 + 12);
+    tsgl_gui_text_setParams(text, (tsgl_print_settings) {
+        .fill = TSGL_INVALID_RAWCOLOR,
+        .bg = TSGL_INVALID_RAWCOLOR,
+        .fg = tsgl_color_raw(TSGL_WHITE, text->colormode),
+        .font = tsgl_font_defaultFont,
+        .locationMode = tsgl_print_start_top,
+        .multiline = false,
+        .globalCentering = false,
+        .targetWidth = 12
+    });
+    tsgl_gui_text_setText(text, "ROM: 2048 / 841", false);
 }
 
 static void _initGui() {
@@ -216,23 +265,7 @@ static void _initGui() {
     tsgl_gui* tab = tsgl_gui_tabbar_addTabObject(tabbar, false);
     tab->color = scene->color;
 
-    const char* longName = "disconnect";
-    tsgl_print_textArea textArea = tsgl_font_getTextArea(0, 0, (tsgl_print_settings) {
-        .fill = TSGL_INVALID_RAWCOLOR,
-        .bg = TSGL_INVALID_RAWCOLOR,
-        .fg = TSGL_INVALID_RAWCOLOR,
-        .font = tsgl_font_defaultFont,
-        .locationMode = tsgl_print_start_top,
-        .multiline = false,
-        .globalCentering = false,
-        .targetWidth = 12
-    }, longName);
-    leverPos = textArea.right + 10 + 10;
-    addTitleLever(tab, "load", &currentSettings.sound_enable_load);
-    addTitleLever(tab, "shutdown", &currentSettings.sound_enable_shutdown);
-    addTitleLever(tab, "click", &currentSettings.sound_enable_click);
-    addTitleLever(tab, "connect", &currentSettings.sound_enable_connect);
-    addTitleLever(tab, longName, &currentSettings.sound_enable_disconnect);
+    _tab_sound(tab);
 
     tsgl_gui* tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
     tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
@@ -252,7 +285,7 @@ static void _initGui() {
     tab = tsgl_gui_tabbar_addTabObject(tabbar, false);
     tab->color = scene->color;
 
-    _connectTabbar(tab);
+    _tab_connect(tab);
 
     tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
     tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
@@ -266,6 +299,17 @@ static void _initGui() {
     tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
     tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
     tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "power", false);
+
+    // --------------------------------------- info tab
+
+    tab = tsgl_gui_tabbar_addTabObject(tabbar, false);
+    tab->color = scene->color;
+
+    _tab_info(tab);
+
+    tabButton = tsgl_gui_tabbar_addTabButton(tabbar, TAB_COLOR, TAB_COLOR_ENABLE, tab);
+    tsgl_gui_button_setStyle(tabButton, TSGL_BLACK, TSGL_BLACK, tsgl_gui_button_fill);
+    tsgl_gui_button_setText(tabButton, TSGL_WHITE, 8, "info", false);
 }
 
 void app_settings_init() {
