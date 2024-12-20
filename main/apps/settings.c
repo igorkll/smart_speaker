@@ -232,7 +232,9 @@ static void _infoUpdateTask(void *pvParameters) {
         tsgl_gui_text_setText(romInfo, romTitle, false);
 
         infoTab->needDraw = true;
-        tsgl_delay(100);
+        while (true) {
+            tsgl_delay(100);
+        }
     }
 }
 
